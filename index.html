@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>英文單字大冒險 🚀</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', '微軟正黑體', Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    /* ── Stars ── */
+    #stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+    .star {
+      position: absolute; background: white; border-radius: 50%;
+      animation: twinkle 2s infinite alternate;
+    }
+    @keyframes twinkle {
+      0% { opacity: 0.2; transform: scale(1); }
+      100% { opacity: 1; transform: scale(1.6); }
+    }
+
+    /* ── Layout ── */
+    .container { position: relative; z-index: 1; width: 100%; max-width: 500px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px 16px 40px; }
+
+    /* ── Screens ── */
+    .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
+    .screen.active { display: flex; }
+
+    /* ── Back Button ── */
+    #backBtn {
+      position: fixed; top: 16px; left: 16px; z-index: 50;
+      background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;
+      width: 44px; height: 44px; font-size: 1.2rem; color: white;
+      cursor: pointer; display: none; align-items: center; justify-content: center;
+      transition: background 0.3s;
+    }
+    #backBtn:hover { background: rgba(255,255,255,0.25); }
+    #backBtn.visible { display: flex; }
+
+    /* ── Main Menu ── */
+    .menu-title {
+      font-size: 2.6rem; font-weight: 900; color: white;
+      text-shadow: 0 0 30px rgba(100,180,255,0.8); text-align: center; margin-top: 30px; line-height: 1.2;
+    }
+    .menu-sub { font-size: 0.95rem; color: rgba(255,255,255,0.6); margin-top: 6px; text-align: center; }
+    .mascot { font-size: 5rem; margin: 18px 0; animation: bounce 1.2s infinite alternate; cursor: default; }
+    @keyframes bounce { 0% { transform: translateY(0) rotate(-5deg); } 100% { transform: translateY(-18px) rotate(5deg); } }
+
+    .stats-bar {
+      display: flex; gap: 20px; background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px; padding: 12px 24px; color: white; font-size: 0.95rem;
+      margin-bottom: 24px; text-align: center;
+    }
+    .stat-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .stat-val { font-size: 1.3rem; font-weight: 900; color: #f9d423; }
+
+    .level-row { display: flex; gap: 8px; margin-bottom: 20px; }
+    .level-btn {
+      padding: 7px 18px; border: 2px solid rgba(255,255,255,0.35); border-radius: 20px;
+      background: transparent; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 0.9rem;
+      transition: all 0.25s; font-weight: 600;
+    }
+    .level-btn:hover { border-color: white; color: white; }
+    .level-btn.active { background: white; color: #1a1a2e; border-color: white; }
+
+    .mode-btn {
+      width: 100%; max-width: 400px; padding: 16px 20px; margin: 7px 0;
+      border: none; border-radius: 18px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3); text-align: left;
+    }
+    .mode-btn:hover { transform: translateY(-4px); box-shadow: 0 14px 32px rgba(0,0,0,0.4); }
+    .mode-btn:active { transform: translateY(-1px); }
+    .mode-btn.fc { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+    .mode-btn.qz { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #0a0a1a; }
+    .mode-btn.mt { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #0a1a0a; }
+    .mode-btn.sp { background: linear-gradient(135deg, #fa8231, #f7b733); color: #1a0a00; }
+    .btn-icon { font-size: 2.2rem; flex-shrink: 0; }
+    .btn-name { font-size: 1.15rem; }
+    .btn-desc { font-size: 0.78rem; opacity: 0.75; font-weight: 400; margin-top: 2px; }
+
+    /* ── Screen headings ── */
+    .screen-title { font-size: 1.5rem; font-weight: 900; color: white; text-align: center; margin-top: 20px; }
+    .screen-sub { font-size: 0.82rem; color: rgba(255,255,255,0.55); margin-bottom: 12px; }
+
+    /* ── Progress ── */
+    .prog-label { color: rgba(255,255,255,0.7); font-size: 0.82rem; margin-bottom: 4px; align-self: flex-start; }
+    .prog-track { width: 100%; height: 9px; background: rgba(255,255,255,0.15); border-radius: 5px; overflow: hidden; margin-bottom: 12px; }
+    .prog-fill { height: 100%; background: linear-gradient(90deg, #f9d423, #ff4e50); border-radius: 5px; transition: width 0.5s ease; }
+
+    /* ── Flashcard ── */
+    .card-wrap { perspective: 1200px; width: 100%; max-width: 400px; height: 230px; margin: 10px 0; cursor: pointer; }
+    .card-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(.4,0,.2,1); }
+    .card-wrap.flipped .card-inner { transform: rotateY(180deg); }
+    .card-face {
+      position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+      border-radius: 22px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 22px;
+    }
+    .card-front { background: rgba(255,255,255,0.97); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+    .card-back { background: linear-gradient(135deg, #4a00e0, #8e2de2); color: white; transform: rotateY(180deg); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+    .c-word { font-size: 2.8rem; font-weight: 900; color: #2d0080; text-align: center; }
+    .c-pos { font-size: 0.8rem; color: #aaa; margin-top: 5px; }
+    .c-hint { font-size: 0.78rem; color: #ccc; margin-top: 14px; animation: pulse-hint 1.5s infinite; }
+    @keyframes pulse-hint { 0%,100%{opacity:0.4} 50%{opacity:1} }
+    .c-zh { font-size: 2rem; font-weight: 900; text-align: center; margin-bottom: 8px; }
+    .c-sent { font-size: 0.82rem; text-align: center; opacity: 0.88; line-height: 1.55; }
+    .c-sent-zh { font-size: 0.75rem; text-align: center; opacity: 0.65; margin-top: 4px; font-style: italic; }
+    .fc-btns { display: flex; gap: 14px; margin-top: 12px; }
+    .fc-btn { padding: 12px 28px; border: none; border-radius: 14px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.25s; }
+    .btn-know { background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; box-shadow: 0 4px 16px rgba(67,233,123,0.45); }
+    .btn-again { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; box-shadow: 0 4px 16px rgba(245,87,108,0.45); }
+    .fc-btn:hover { transform: translateY(-3px); }
+    .fc-status { color: rgba(255,255,255,0.55); font-size: 0.82rem; margin-top: 8px; text-align: center; }
+
+    /* ── Quiz ── */
+    .qz-hdr { width: 100%; max-width: 420px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .qz-pill { background: rgba(255,255,255,0.12); backdrop-filter: blur(6px); border-radius: 10px; padding: 5px 14px; color: white; font-weight: 700; font-size: 0.9rem; }
+    .timer-track { width: 100%; max-width: 420px; height: 7px; background: rgba(255,255,255,0.15); border-radius: 4px; overflow: hidden; margin-bottom: 14px; }
+    .timer-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #43e97b, #f9d423, #ff4e50); border-radius: 4px; transition: width 0.1s linear; }
+    .qz-card {
+      width: 100%; max-width: 420px; background: rgba(255,255,255,0.95);
+      border-radius: 20px; padding: 24px 20px; text-align: center; margin-bottom: 16px;
+      box-shadow: 0 10px 32px rgba(0,0,0,0.25);
+    }
+    .qz-lbl { font-size: 0.8rem; color: #888; margin-bottom: 8px; }
+    .qz-word { font-size: 1.9rem; font-weight: 900; color: #2d0080; }
+    .qz-sent { font-size: 0.88rem; color: #555; margin-top: 6px; line-height: 1.6; }
+    .qz-opts { width: 100%; max-width: 420px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .opt-btn {
+      padding: 15px 10px; border: 2px solid rgba(255,255,255,0.25); border-radius: 15px;
+      background: rgba(255,255,255,0.1); backdrop-filter: blur(4px);
+      color: white; font-size: 0.92rem; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; min-height: 62px; line-height: 1.3;
+    }
+    .opt-btn:hover:not(:disabled) { background: rgba(255,255,255,0.22); transform: scale(1.03); }
+    .opt-btn.correct { background: linear-gradient(135deg, #43e97b, #38f9d7)!important; border-color: #43e97b!important; animation: pop 0.4s ease; }
+    .opt-btn.wrong { background: linear-gradient(135deg, #f5576c, #f093fb)!important; border-color: #f5576c!important; animation: shake 0.45s ease; }
+    @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+    .combo-badge {
+      position: fixed; top: 80px; right: 20px; z-index: 60;
+      background: linear-gradient(135deg, #f9d423, #ff6b35);
+      border-radius: 12px; padding: 8px 14px; color: white; font-weight: 900; font-size: 1rem;
+      animation: comboIn 0.4s cubic-bezier(.175,.885,.32,1.275) forwards;
+      pointer-events: none;
+    }
+    @keyframes comboIn { 0%{transform:scale(0) rotate(-10deg); opacity:0} 100%{transform:scale(1) rotate(0); opacity:1} }
+
+    /* ── Match ── */
+    .mt-hdr { width: 100%; max-width: 420px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .mt-timer { font-size: 1.3rem; font-weight: 900; color: white; }
+    .mt-grid { width: 100%; max-width: 420px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 8px 0; }
+    .mt-card {
+      aspect-ratio: 1; border: 2px solid rgba(255,255,255,0.2); border-radius: 13px;
+      background: rgba(255,255,255,0.1); backdrop-filter: blur(4px);
+      color: white; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+      transition: all 0.25s; display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 6px; min-height: 68px; line-height: 1.3;
+    }
+    .mt-card:hover:not([disabled]) { background: rgba(255,255,255,0.22); transform: scale(1.06); }
+    .mt-card.sel { background: rgba(255,255,255,0.35); border-color: #f9d423; box-shadow: 0 0 12px rgba(249,212,35,0.6); }
+    .mt-card.done { background: linear-gradient(135deg, #43e97b33, #38f9d733); border-color: #43e97b; opacity: 0.6; pointer-events: none; }
+    .mt-card.err { animation: shake 0.45s ease; }
+    .mt-card.en-card { border-top: 3px solid #4facfe; }
+    .mt-card.zh-card { border-top: 3px solid #f093fb; }
+    .mt-status { color: rgba(255,255,255,0.6); font-size: 0.82rem; text-align: center; margin-top: 6px; }
+
+    /* ── Spelling ── */
+    .sp-card {
+      width: 100%; max-width: 400px; background: rgba(255,255,255,0.95);
+      border-radius: 20px; padding: 24px; text-align: center; margin: 12px 0;
+      box-shadow: 0 10px 32px rgba(0,0,0,0.25);
+    }
+    .sp-hint { font-size: 0.82rem; color: #888; margin-bottom: 6px; }
+    .sp-zh { font-size: 1.8rem; font-weight: 900; color: #2d0080; margin-bottom: 6px; }
+    .sp-sent { font-size: 0.85rem; color: #555; line-height: 1.6; }
+    .sp-blanks { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
+    .sp-blank {
+      width: 36px; height: 44px; border: none; border-bottom: 3px solid #4a00e0;
+      background: transparent; text-align: center; font-size: 1.4rem; font-weight: 900;
+      color: #4a00e0; outline: none;
+    }
+    .sp-blank.filled { color: #2d0080; }
+    .sp-blank.correct-letter { color: #27ae60; border-color: #27ae60; }
+    .sp-blank.wrong-letter { color: #e74c3c; border-color: #e74c3c; animation: shake 0.4s ease; }
+    .sp-letters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
+    .sp-letter {
+      width: 40px; height: 40px; border: none; border-radius: 10px;
+      background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+      font-size: 1.1rem; font-weight: 900; cursor: pointer; transition: all 0.2s;
+    }
+    .sp-letter:hover:not([disabled]) { transform: scale(1.15); box-shadow: 0 4px 12px rgba(102,126,234,0.6); }
+    .sp-letter:disabled { opacity: 0.3; cursor: default; transform: none; }
+    .sp-actions { display: flex; gap: 10px; justify-content: center; }
+    .sp-action-btn {
+      padding: 10px 22px; border: none; border-radius: 12px; font-size: 0.9rem;
+      font-weight: 700; cursor: pointer; transition: all 0.25s;
+    }
+    .sp-check { background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; }
+    .sp-clear { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+    .sp-skip { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.2); }
+    .sp-action-btn:hover { transform: translateY(-2px); }
+
+    /* ── Result Overlay ── */
+    .overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      display: none; justify-content: center; align-items: center; z-index: 200;
+    }
+    .overlay.show { display: flex; }
+    .result-box {
+      background: white; border-radius: 26px; padding: 40px 30px;
+      text-align: center; max-width: 320px; width: 90%;
+      animation: popIn 0.5s cubic-bezier(.175,.885,.32,1.275);
+    }
+    @keyframes popIn { 0%{transform:scale(0.4);opacity:0} 100%{transform:scale(1);opacity:1} }
+    .r-emoji { font-size: 4.5rem; margin-bottom: 10px; }
+    .r-title { font-size: 1.6rem; font-weight: 900; color: #2d0080; margin-bottom: 8px; }
+    .r-score { font-size: 0.95rem; color: #666; margin-bottom: 12px; white-space: pre-line; }
+    .r-stars { font-size: 2.2rem; margin-bottom: 20px; }
+    .r-btn {
+      padding: 12px 26px; border: none; border-radius: 14px; margin: 5px;
+      background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+      font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.25s;
+    }
+    .r-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(102,126,234,0.5); }
+
+    /* ── Feedback ── */
+    .feedback {
+      position: fixed; top: 50%; left: 50%; pointer-events: none; z-index: 180;
+      font-size: 3rem; font-weight: 900;
+      animation: fbAnim 0.9s cubic-bezier(.4,0,.2,1) forwards;
+    }
+    @keyframes fbAnim {
+      0%{opacity:1;transform:translate(-50%,-50%) scale(0.5)}
+      40%{opacity:1;transform:translate(-50%,-60%) scale(1.3)}
+      100%{opacity:0;transform:translate(-50%,-85%) scale(1)}
+    }
+
+    /* ── Confetti ── */
+    .confetti {
+      position: fixed; top: -12px; pointer-events: none; z-index: 300;
+      animation: fall linear forwards;
+    }
+    @keyframes fall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(105vh) rotate(720deg);opacity:0} }
+
+    /* ── New mode button colors ── */
+    .mode-btn.rd { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .mode-btn.cz { background: linear-gradient(135deg, #f7971e, #ffd200); color: #1a0500; }
+    .mode-btn.gr { background: linear-gradient(135deg, #11998e, #38ef7d); color: #001a10; }
+
+    /* ── Reading Comprehension ── */
+    .rd-passage {
+      width: 100%; max-width: 440px; background: rgba(255,255,255,0.96);
+      border-radius: 18px; padding: 16px 18px; margin-bottom: 10px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.25); max-height: 190px; overflow-y: auto;
+      scrollbar-width: thin;
+    }
+    .rd-title { font-size: 1rem; font-weight: 900; color: #2d0080; margin-bottom: 8px; border-bottom: 2px solid #e0d0ff; padding-bottom: 6px; }
+    .rd-text { font-size: 0.88rem; color: #333; line-height: 1.8; }
+    .rd-qbox {
+      width: 100%; max-width: 440px;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 14px; padding: 12px 16px; margin-bottom: 10px; color: white;
+    }
+    .rd-qnum { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-bottom: 3px; letter-spacing: 1px; }
+    .rd-q { font-size: 0.95rem; font-weight: 700; line-height: 1.5; }
+
+    /* ── Cloze Test ── */
+    .cz-passage {
+      width: 100%; max-width: 440px; background: rgba(255,255,255,0.96);
+      border-radius: 18px; padding: 16px 18px; margin-bottom: 10px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.25); line-height: 2.1; font-size: 0.9rem; color: #333;
+    }
+    .cz-blank {
+      display: inline-block; min-width: 72px; border-bottom: 2.5px solid #9b59b6;
+      text-align: center; font-weight: 900; color: #9b59b6; padding: 0 6px;
+      border-radius: 3px; transition: all 0.2s;
+    }
+    .cz-blank.active { background: #f0e6ff; border-color: #4a00e0; color: #4a00e0; }
+    .cz-blank.ok   { color: #27ae60; border-color: #27ae60; background: #e8f8f0; }
+    .cz-blank.err  { color: #e74c3c; border-color: #e74c3c; background: #fde8e8; }
+    .cz-qinfo { color: rgba(255,255,255,0.75); font-size: 0.82rem; margin-bottom: 6px; text-align: center; }
+
+    /* ── Grammar ── */
+    .gr-card {
+      width: 100%; max-width: 440px; background: rgba(255,255,255,0.96);
+      border-radius: 18px; padding: 22px 20px; margin-bottom: 14px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+    }
+    .gr-topic {
+      font-size: 0.7rem; color: white; background: linear-gradient(135deg, #11998e, #38ef7d);
+      display: inline-block; border-radius: 6px; padding: 3px 10px;
+      margin-bottom: 10px; font-weight: 700; letter-spacing: 1px;
+    }
+    .gr-q { font-size: 1rem; color: #222; line-height: 1.8; font-weight: 600; }
+    .gr-blank { color: #4a00e0; font-weight: 900; border-bottom: 2px solid #4a00e0; padding: 0 10px; font-size: 1.1rem; }
+
+    /* ── Explanation panel (bottom sheet) ── */
+    .explain-panel {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(105%);
+      width: 100%; max-width: 500px; background: white;
+      border-radius: 24px 24px 0 0; padding: 24px 22px 40px;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.35); z-index: 160;
+      transition: transform 0.38s cubic-bezier(.4,0,.2,1);
+    }
+    .explain-panel.show { transform: translateX(-50%) translateY(0); }
+    .exp-verdict { font-size: 1.4rem; font-weight: 900; margin-bottom: 8px; }
+    .exp-verdict.ok  { color: #27ae60; }
+    .exp-verdict.err { color: #e74c3c; }
+    .exp-answer { font-size: 0.9rem; color: #333; margin-bottom: 8px; font-weight: 600; }
+    .exp-explain {
+      font-size: 0.85rem; color: #444; line-height: 1.7;
+      background: #f5f0ff; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;
+      border-left: 4px solid #9b59b6;
+    }
+    .exp-next {
+      width: 100%; padding: 14px; border: none; border-radius: 14px;
+      background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+      font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s;
+    }
+    .exp-next:hover { opacity: 0.88; }
+    .exp-dim { position: fixed; top:0;left:0;width:100%;height:100%; background:rgba(0,0,0,0.3); z-index:155; display:none; }
+    .exp-dim.show { display:block; }
+
+    /* ── Responsive ── */
+    @media (max-width: 380px) {
+      .c-word { font-size: 2.2rem; }
+      .mt-card { font-size: 0.7rem; min-height: 58px; }
+    }
+  </style>
+</head>
+<body>
+<div id="stars"></div>
+<button id="backBtn" onclick="goHome()">←</button>
+
+<div class="container">
+
+  <!-- ════ MAIN MENU ════ -->
+  <div class="screen active" id="menuScreen">
+    <div class="menu-title">英文單字<br>大冒險</div>
+    <div class="menu-sub">國中會考英文練習系統</div>
+    <div class="mascot" id="mascot">🦁</div>
+    <div class="stats-bar">
+      <div class="stat-item"><div class="stat-val" id="totalPts">0</div><div>總積分</div></div>
+      <div class="stat-item"><div class="stat-val" id="bestStr">0</div><div>最高連線</div></div>
+      <div class="stat-item"><div class="stat-val" id="wordsDone">0</div><div>學過單字</div></div>
+    </div>
+    <div class="level-row">
+      <button class="level-btn active" onclick="setLevel('easy',this)">初級</button>
+      <button class="level-btn" onclick="setLevel('medium',this)">中級</button>
+      <button class="level-btn" onclick="setLevel('hard',this)">進階</button>
+      <button class="level-btn" onclick="setLevel('all',this)">全部</button>
+    </div>
+    <button class="mode-btn fc" onclick="startFlashcard()">
+      <span class="btn-icon">🃏</span>
+      <div><div class="btn-name">單字卡</div><div class="btn-desc">翻轉卡片，學習單字與例句</div></div>
+    </button>
+    <button class="mode-btn qz" onclick="startQuiz()">
+      <span class="btn-icon">🎯</span>
+      <div><div class="btn-name">選擇題測驗</div><div class="btn-desc">限時搶答，三種題型，考驗實力</div></div>
+    </button>
+    <button class="mode-btn mt" onclick="startMatch()">
+      <span class="btn-icon">🧩</span>
+      <div><div class="btn-name">英中配對</div><div class="btn-desc">點選配對，挑戰速度與記憶力</div></div>
+    </button>
+    <button class="mode-btn sp" onclick="startSpelling()">
+      <span class="btn-icon">✍️</span>
+      <div><div class="btn-name">拼字挑戰</div><div class="btn-desc">點字母拼出正確單字</div></div>
+    </button>
+    <button class="mode-btn rd" onclick="startReading()">
+      <span class="btn-icon">📖</span>
+      <div><div class="btn-name">英文閱讀測驗</div><div class="btn-desc">讀短文回答理解題，限時搶答</div></div>
+    </button>
+    <button class="mode-btn cz" onclick="startCloze()">
+      <span class="btn-icon">📝</span>
+      <div><div class="btn-name">克漏字測驗</div><div class="btn-desc">選填空格，完成文章</div></div>
+    </button>
+    <button class="mode-btn gr" onclick="startGrammar()">
+      <span class="btn-icon">🔡</span>
+      <div><div class="btn-name">文法測驗</div><div class="btn-desc">時態、句型、介系詞全面考驗</div></div>
+    </button>
+  </div>
+
+  <!-- ════ FLASHCARD ════ -->
+  <div class="screen" id="flashcardScreen">
+    <div class="screen-title">🃏 單字卡</div>
+    <div class="screen-sub">點擊卡片翻面查看答案</div>
+    <div class="prog-label" id="fcProg">第 1 / 20 張</div>
+    <div class="prog-track"><div class="prog-fill" id="fcBar" style="width:0%"></div></div>
+    <div class="card-wrap" id="fcCard" onclick="flipFC()">
+      <div class="card-inner" id="fcInner">
+        <div class="card-face card-front">
+          <div class="c-word" id="fcWord"></div>
+          <div class="c-pos" id="fcPos"></div>
+          <div class="c-hint">👆 點擊翻轉</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="c-zh" id="fcZh"></div>
+          <div class="c-sent" id="fcSent"></div>
+          <div class="c-sent-zh" id="fcSentZh"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-btns" id="fcBtns" style="display:none">
+      <button class="fc-btn btn-again" onclick="fcAns(false)">🔄 再練習</button>
+      <button class="fc-btn btn-know" onclick="fcAns(true)">✅ 已懂！</button>
+    </div>
+    <div class="fc-status" id="fcStatus"></div>
+  </div>
+
+  <!-- ════ QUIZ ════ -->
+  <div class="screen" id="quizScreen">
+    <div class="screen-title">🎯 選擇題測驗</div>
+    <div class="qz-hdr">
+      <div class="qz-pill">⭐ <span id="qzScore">0</span></div>
+      <div id="qzLives" style="font-size:1.3rem">❤️❤️❤️</div>
+      <div class="qz-pill">🔥 <span id="qzStreak">0</span></div>
+    </div>
+    <div class="timer-track"><div class="timer-fill" id="qzTimer"></div></div>
+    <div class="prog-label" id="qzProg">第 1 / 20 題</div>
+    <div class="prog-track"><div class="prog-fill" id="qzBar" style="width:0%"></div></div>
+    <div class="qz-card">
+      <div class="qz-lbl" id="qzLbl"></div>
+      <div class="qz-word" id="qzWord"></div>
+      <div class="qz-sent" id="qzSent"></div>
+    </div>
+    <div class="qz-opts" id="qzOpts"></div>
+  </div>
+
+  <!-- ════ MATCH ════ -->
+  <div class="screen" id="matchScreen">
+    <div class="screen-title">🧩 英中配對</div>
+    <div class="screen-sub">藍色=英文 　粉色=中文　找出配對！</div>
+    <div class="mt-hdr">
+      <div class="qz-pill">✅ <span id="mtScore">0</span> 對</div>
+      <div class="mt-timer" id="mtTimer">⏱ 00:00</div>
+      <div class="qz-pill">❌ <span id="mtErr">0</span> 錯</div>
+    </div>
+    <div class="mt-grid" id="mtGrid"></div>
+    <div class="mt-status" id="mtStatus">請先點選一張卡片…</div>
+  </div>
+
+  <!-- ════ SPELLING ════ -->
+  <div class="screen" id="spellingScreen">
+    <div class="screen-title">✍️ 拼字挑戰</div>
+    <div class="qz-hdr">
+      <div class="qz-pill">⭐ <span id="spScore">0</span></div>
+      <div class="qz-pill">第 <span id="spIdx">1</span>/<span id="spTotal">20</span> 題</div>
+      <div class="qz-pill">❌ <span id="spErr">0</span></div>
+    </div>
+    <div class="prog-track" style="width:100%;max-width:420px">
+      <div class="prog-fill" id="spBar" style="width:0%"></div>
+    </div>
+    <div class="sp-card">
+      <div class="sp-hint" id="spHint"></div>
+      <div class="sp-zh" id="spZh"></div>
+      <div class="sp-sent" id="spSent"></div>
+    </div>
+    <div class="sp-blanks" id="spBlanks"></div>
+    <div class="sp-letters" id="spLetters"></div>
+    <div class="sp-actions">
+      <button class="sp-action-btn sp-clear" onclick="spClear()">🗑 清除</button>
+      <button class="sp-action-btn sp-check" onclick="spCheck()">✅ 確認</button>
+      <button class="sp-action-btn sp-skip" onclick="spSkip()">⏭ 跳過</button>
+    </div>
+  </div>
+
+  <!-- ════ READING ════ -->
+  <div class="screen" id="readingScreen">
+    <div class="screen-title">📖 閱讀測驗</div>
+    <div class="qz-hdr">
+      <div class="qz-pill">⭐ <span id="rdScore">0</span></div>
+      <div id="rdLives" style="font-size:1.3rem">❤️❤️❤️</div>
+      <div class="qz-pill">📄 <span id="rdProg">1/24</span></div>
+    </div>
+    <div class="timer-track"><div class="timer-fill" id="rdTimer" style="width:100%"></div></div>
+    <div class="rd-passage">
+      <div class="rd-title" id="rdTitle"></div>
+      <div class="rd-text" id="rdText"></div>
+    </div>
+    <div class="rd-qbox">
+      <div class="rd-qnum" id="rdQNum">Q1</div>
+      <div class="rd-q" id="rdQ"></div>
+    </div>
+    <div class="qz-opts" id="rdOpts"></div>
+  </div>
+
+  <!-- ════ CLOZE ════ -->
+  <div class="screen" id="clozeScreen">
+    <div class="screen-title">📝 克漏字測驗</div>
+    <div class="qz-hdr">
+      <div class="qz-pill">⭐ <span id="czScore">0</span></div>
+      <div id="czLives" style="font-size:1.3rem">❤️❤️❤️</div>
+      <div class="qz-pill">✏️ <span id="czProg">1/5</span></div>
+    </div>
+    <div class="timer-track"><div class="timer-fill" id="czTimer" style="width:100%"></div></div>
+    <div class="cz-passage" id="czPassage"></div>
+    <div class="cz-qinfo" id="czQInfo">請選擇空格 (1) 的正確答案</div>
+    <div class="qz-opts" id="czOpts"></div>
+  </div>
+
+  <!-- ════ GRAMMAR ════ -->
+  <div class="screen" id="grammarScreen">
+    <div class="screen-title">🔡 文法測驗</div>
+    <div class="qz-hdr">
+      <div class="qz-pill">⭐ <span id="grScore">0</span></div>
+      <div id="grLives" style="font-size:1.3rem">❤️❤️❤️</div>
+      <div class="qz-pill">🔥 <span id="grStreak">0</span></div>
+    </div>
+    <div class="timer-track"><div class="timer-fill" id="grTimer" style="width:100%"></div></div>
+    <div class="prog-label" id="grProg">第 1 / 20 題</div>
+    <div class="prog-track"><div class="prog-fill" id="grBar" style="width:0%"></div></div>
+    <div class="gr-card">
+      <div class="gr-topic" id="grTopic">文法主題</div>
+      <div class="gr-q" id="grQ"></div>
+    </div>
+    <div class="qz-opts" id="grOpts"></div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- Explanation Dim -->
+<div class="exp-dim" id="expDim"></div>
+
+<!-- Explanation Panel -->
+<div class="explain-panel" id="explainPanel">
+  <div class="exp-verdict" id="expVerdict">✅ 答對了！</div>
+  <div class="exp-answer" id="expAnswer"></div>
+  <div class="exp-explain" id="expExplain"></div>
+  <button class="exp-next" onclick="closeExplain()">下一題 →</button>
+</div>
+
+<!-- Result Overlay -->
+<div class="overlay" id="overlay">
+  <div class="result-box">
+    <div class="r-emoji" id="rEmoji">🎉</div>
+    <div class="r-title" id="rTitle">太棒了！</div>
+    <div class="r-score" id="rScore"></div>
+    <div class="r-stars" id="rStars">⭐⭐⭐</div>
+    <div>
+      <button class="r-btn" onclick="playAgain()">再玩一次</button>
+      <button class="r-btn" onclick="goHome()">回主選單</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// VOCABULARY DATABASE
+// ══════════════════════════════════════════
+const vocab = {
+  easy: [
+    {w:'apple',    zh:'蘋果',       pos:'n.',  s:'I eat an apple every day.',            sz:'我每天吃一顆蘋果。'},
+    {w:'book',     zh:'書本',       pos:'n.',  s:'She loves to read books.',              sz:'她喜歡閱讀書籍。'},
+    {w:'cat',      zh:'貓',         pos:'n.',  s:'The cat is sleeping on the sofa.',      sz:'貓睡在沙發上。'},
+    {w:'dog',      zh:'狗',         pos:'n.',  s:'The dog runs in the park.',             sz:'狗在公園裡跑步。'},
+    {w:'friend',   zh:'朋友',       pos:'n.',  s:'She is my best friend.',               sz:'她是我最好的朋友。'},
+    {w:'happy',    zh:'快樂的',     pos:'adj.',s:'I am happy to see you.',               sz:'我很高興見到你。'},
+    {w:'house',    zh:'房子',       pos:'n.',  s:'They live in a big house.',             sz:'他們住在一棟大房子裡。'},
+    {w:'jump',     zh:'跳',         pos:'v.',  s:'The kids jump rope every day.',         sz:'孩子們每天跳繩。'},
+    {w:'learn',    zh:'學習',       pos:'v.',  s:'We learn English at school.',           sz:'我們在學校學英文。'},
+    {w:'music',    zh:'音樂',       pos:'n.',  s:'I love listening to music.',            sz:'我喜歡聽音樂。'},
+    {w:'night',    zh:'夜晚',       pos:'n.',  s:'Stars shine at night.',                sz:'星星在夜晚閃耀。'},
+    {w:'open',     zh:'打開',       pos:'v.',  s:'Please open the window.',              sz:'請打開窗戶。'},
+    {w:'play',     zh:'玩耍',       pos:'v.',  s:'Children play in the yard.',           sz:'孩子們在院子裡玩耍。'},
+    {w:'quiet',    zh:'安靜的',     pos:'adj.',s:'Please be quiet in the library.',      sz:'在圖書館請保持安靜。'},
+    {w:'rain',     zh:'雨；下雨',   pos:'n/v.',s:'It will rain tomorrow.',               sz:'明天會下雨。'},
+    {w:'school',   zh:'學校',       pos:'n.',  s:'I go to school by bus.',               sz:'我坐公車上學。'},
+    {w:'sleep',    zh:'睡覺',       pos:'v.',  s:'Children should sleep early.',         sz:'孩子們應該早睡。'},
+    {w:'smile',    zh:'微笑',       pos:'v/n.',s:'Her smile makes everyone happy.',      sz:'她的微笑讓大家開心。'},
+    {w:'water',    zh:'水',         pos:'n.',  s:'Drink more water every day.',          sz:'每天多喝水。'},
+    {w:'young',    zh:'年輕的',     pos:'adj.',s:'She looks very young.',               sz:'她看起來很年輕。'},
+    {w:'food',     zh:'食物',       pos:'n.',  s:'We need food to stay alive.',          sz:'我們需要食物才能生存。'},
+    {w:'dream',    zh:'夢想；夢',   pos:'n/v.',s:'She dreams of becoming a doctor.',     sz:'她夢想成為一名醫生。'},
+    {w:'clean',    zh:'乾淨的；打掃',pos:'adj.',s:'Keep your room clean.',              sz:'保持你的房間整潔。'},
+    {w:'enjoy',    zh:'享受',       pos:'v.',  s:'I enjoy playing basketball.',          sz:'我喜歡打籃球。'},
+    {w:'fast',     zh:'快速的',     pos:'adj.',s:'The train is very fast.',              sz:'火車非常快。'},
+  ],
+  medium: [
+    {w:'accident',   zh:'意外事故',   pos:'n.',  s:'A car accident happened nearby.',       sz:'附近發生了一場車禍。'},
+    {w:'believe',    zh:'相信',       pos:'v.',  s:'I believe you can do it.',             sz:'我相信你能做到。'},
+    {w:'celebrate',  zh:'慶祝',       pos:'v.',  s:'We celebrate New Year together.',      sz:'我們一起慶祝新年。'},
+    {w:'culture',    zh:'文化',       pos:'n.',  s:'Taiwan has a rich culture.',           sz:'台灣有豐富的文化。'},
+    {w:'decide',     zh:'決定',       pos:'v.',  s:'She decided to study harder.',         sz:'她決定更努力讀書。'},
+    {w:'education',  zh:'教育',       pos:'n.',  s:'Education changes lives.',             sz:'教育改變人生。'},
+    {w:'environment',zh:'環境',       pos:'n.',  s:'We must protect the environment.',     sz:'我們必須保護環境。'},
+    {w:'experience', zh:'經驗；體驗', pos:'n.',  s:'Travel gives us new experiences.',     sz:'旅行給我們新體驗。'},
+    {w:'famous',     zh:'著名的',     pos:'adj.',s:'Taiwan is famous for night markets.',  sz:'台灣以夜市聞名。'},
+    {w:'history',    zh:'歷史',       pos:'n.',  s:'We study history in school.',          sz:'我們在學校學歷史。'},
+    {w:'improve',    zh:'改善；進步', pos:'v.',  s:'Practice helps you improve.',          sz:'練習幫助你進步。'},
+    {w:'journey',    zh:'旅程',       pos:'n.',  s:'Life is a long journey.',              sz:'人生是一段漫長的旅程。'},
+    {w:'knowledge',  zh:'知識',       pos:'n.',  s:'Reading books builds knowledge.',      sz:'閱讀書籍能增長知識。'},
+    {w:'language',   zh:'語言',       pos:'n.',  s:'English is a global language.',        sz:'英語是一種全球語言。'},
+    {w:'memory',     zh:'記憶；回憶', pos:'n.',  s:'I have happy childhood memories.',     sz:'我有快樂的童年回憶。'},
+    {w:'opinion',    zh:'意見；看法', pos:'n.',  s:'Please share your opinion.',           sz:'請分享你的看法。'},
+    {w:'popular',    zh:'受歡迎的',   pos:'adj.',s:'This singer is very popular.',         sz:'這位歌手非常受歡迎。'},
+    {w:'protect',    zh:'保護',       pos:'v.',  s:'We should protect wild animals.',      sz:'我們應該保護野生動物。'},
+    {w:'respect',    zh:'尊重',       pos:'v/n.',s:'We should respect our teachers.',      sz:'我們應該尊重老師。'},
+    {w:'suggest',    zh:'建議',       pos:'v.',  s:'I suggest you practice every day.',    sz:'我建議你每天練習。'},
+    {w:'technology', zh:'科技',       pos:'n.',  s:'Technology changes our lives.',        sz:'科技改變了我們的生活。'},
+    {w:'tradition',  zh:'傳統',       pos:'n.',  s:'Dragon Boat is a Chinese tradition.',  sz:'龍舟是中華傳統。'},
+    {w:'volunteer',  zh:'志工',       pos:'n.',  s:'She volunteers at the hospital.',      sz:'她在醫院當志工。'},
+    {w:'prepare',    zh:'準備',       pos:'v.',  s:'Prepare for the test in advance.',     sz:'提前準備考試。'},
+    {w:'communicate',zh:'溝通',       pos:'v.',  s:'Good communication is important.',     sz:'良好溝通很重要。'},
+    {w:'publish',    zh:'出版；發表', pos:'v.',  s:'She published her first novel.',       sz:'她出版了第一本小說。'},
+    {w:'creative',   zh:'有創意的',   pos:'adj.',s:'She is a very creative designer.',     sz:'她是一位很有創意的設計師。'},
+    {w:'global',     zh:'全球的',     pos:'adj.',s:'Climate change is a global problem.',  sz:'氣候變遷是全球問題。'},
+    {w:'challenge',  zh:'挑戰',       pos:'n.',  s:'Learning English is a fun challenge.', sz:'學英文是個有趣的挑戰。'},
+    {w:'patient',    zh:'有耐心的',   pos:'adj.',s:'Be patient — good things take time.',  sz:'要有耐心——好事需要時間。'},
+  ],
+  hard: [
+    {w:'achievement',  zh:'成就；成果',   pos:'n.',  s:'Winning first prize was a great achievement.', sz:'贏得第一名是一項偉大成就。'},
+    {w:'biodiversity', zh:'生物多樣性',   pos:'n.',  s:'Biodiversity is key to a healthy planet.',    sz:'生物多樣性是健康地球的關鍵。'},
+    {w:'circumstance', zh:'情況；環境',   pos:'n.',  s:'Under these circumstances, we must act.',      sz:'在這種情況下我們必須採取行動。'},
+    {w:'conscious',    zh:'有意識的',     pos:'adj.',s:'Be conscious of your surroundings.',           sz:'要意識到你周圍的環境。'},
+    {w:'determination',zh:'決心；毅力',   pos:'n.',  s:'Success comes from hard work and determination.',sz:'成功來自努力和毅力。'},
+    {w:'enthusiasm',   zh:'熱情；熱忱',   pos:'n.',  s:'She studies English with enthusiasm.',         sz:'她充滿熱情地學習英文。'},
+    {w:'generation',   zh:'世代；一代',   pos:'n.',  s:'Each generation faces new challenges.',        sz:'每個世代都面臨新挑戰。'},
+    {w:'imagination',  zh:'想像力',       pos:'n.',  s:'Children have great imagination.',            sz:'孩子們有很強的想像力。'},
+    {w:'independence', zh:'獨立',         pos:'n.',  s:'Independence is important to grow up.',       sz:'獨立對成長很重要。'},
+    {w:'magnificent',  zh:'壯觀的；宏偉的',pos:'adj.',s:'The mountain view is magnificent.',          sz:'山頂的景色壯觀極了。'},
+    {w:'necessary',    zh:'必要的',       pos:'adj.',s:'Sleep is necessary for good health.',         sz:'睡眠對健康是必要的。'},
+    {w:'observation',  zh:'觀察',         pos:'n.',  s:'Scientists use observation to discover.',     sz:'科學家用觀察來發現真相。'},
+    {w:'persistence',  zh:'堅持；毅力',   pos:'n.',  s:'Success requires persistence.',              sz:'成功需要堅持不懈。'},
+    {w:'responsibility',zh:'責任',        pos:'n.',  s:'Taking care of others is a responsibility.',  sz:'照顧他人是一種責任。'},
+    {w:'sustainable',  zh:'永續的',       pos:'adj.',s:'We need sustainable energy sources.',        sz:'我們需要永續能源。'},
+    {w:'transformation',zh:'轉變；改造',  pos:'n.',  s:'The city went through a transformation.',     sz:'這座城市歷經了轉變。'},
+    {w:'contribute',   zh:'貢獻；捐獻',   pos:'v.',  s:'Everyone can contribute to society.',         sz:'每個人都能對社會做出貢獻。'},
+    {w:'significant',  zh:'重要的；顯著的',pos:'adj.',s:'This is a significant discovery.',           sz:'這是一項重大發現。'},
+    {w:'opportunity',  zh:'機會',         pos:'n.',  s:'Don\'t miss this great opportunity.',         sz:'不要錯過這個好機會。'},
+    {w:'consequence',  zh:'後果；結果',   pos:'n.',  s:'Think about the consequences first.',         sz:'先考慮後果再行動。'},
+  ]
+};
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let currentLevel = 'easy';
+let currentMode  = '';
+let currentWords = [];
+
+let totalPts  = +localStorage.getItem('totalPts')  || 0;
+let bestStr   = +localStorage.getItem('bestStr')   || 0;
+let wordsDone = +localStorage.getItem('wordsDone') || 0;
+
+// Flashcard
+let fcIdx = 0, fcKnown = 0, fcAgain = [];
+
+// Quiz
+let qzIdx = 0, qzScore = 0, qzLives = 3, qzStreak = 0;
+let qzTimer = null, qzTimeLeft = 15, qzDone = false;
+
+// Match
+let mtSel = null, mtMatched = 0, mtErr = 0, mtCards = [], mtInterval = null, mtSec = 0;
+
+// Spelling
+let spIdx = 0, spScore = 0, spErrCount = 0;
+let spInput = [], spWordLetters = [];
+
+// ══════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  createStars();
+  renderMainMenu();
+});
+
+function createStars() {
+  const el = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-duration:${Math.random()*2+1}s;animation-delay:${Math.random()*2}s`;
+    el.appendChild(s);
+  }
+}
+
+function renderMainMenu() {
+  document.getElementById('totalPts').textContent = totalPts;
+  document.getElementById('bestStr').textContent  = bestStr;
+  document.getElementById('wordsDone').textContent = wordsDone;
+  // Randomise mascot
+  const mascots = ['🦁','🐯','🦊','🐉','🚀','🌟','🦄','🐧'];
+  document.getElementById('mascot').textContent = mascots[Math.floor(Math.random()*mascots.length)];
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function setLevel(lv, btn) {
+  currentLevel = lv;
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function getWords() {
+  return currentLevel === 'all'
+    ? [...vocab.easy, ...vocab.medium, ...vocab.hard]
+    : [...(vocab[currentLevel] || vocab.easy)];
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const bb = document.getElementById('backBtn');
+  id === 'menuScreen' ? bb.classList.remove('visible') : bb.classList.add('visible');
+}
+
+function goHome() {
+  clearInterval(qzTimer);
+  clearInterval(mtInterval);
+  if (typeof rdTimer !== 'undefined')  clearInterval(rdTimer);
+  if (typeof czTimer !== 'undefined')  clearInterval(czTimer);
+  if (typeof grTimer !== 'undefined')  clearInterval(grTimer);
+  document.getElementById('explainPanel').classList.remove('show');
+  document.getElementById('expDim').classList.remove('show');
+  hideOverlay();
+  showScreen('menuScreen');
+  renderMainMenu();
+}
+
+function playAgain() {
+  hideOverlay();
+  if (currentMode === 'flashcard') startFlashcard();
+  else if (currentMode === 'quiz')      startQuiz();
+  else if (currentMode === 'match')     startMatch();
+  else if (currentMode === 'spelling')  startSpelling();
+  else if (currentMode === 'reading')   startReading();
+  else if (currentMode === 'cloze')     startCloze();
+  else if (currentMode === 'grammar')   startGrammar();
+}
+
+// ══════════════════════════════════════════
+// ─── FLASHCARD MODE ───
+// ══════════════════════════════════════════
+function startFlashcard() {
+  currentMode = 'flashcard';
+  currentWords = shuffle([...getWords()]);
+  fcIdx = 0; fcKnown = 0; fcAgain = [];
+  showScreen('flashcardScreen');
+  renderFC();
+}
+
+function renderFC() {
+  if (fcIdx >= currentWords.length) { endFlashcard(); return; }
+  const w = currentWords[fcIdx];
+  const total = currentWords.length;
+  document.getElementById('fcProg').textContent = `第 ${fcIdx+1} / ${total} 張`;
+  document.getElementById('fcBar').style.width  = `${(fcIdx/total)*100}%`;
+  document.getElementById('fcWord').textContent   = w.w;
+  document.getElementById('fcPos').textContent    = w.pos;
+  document.getElementById('fcZh').textContent     = w.zh;
+  document.getElementById('fcSent').textContent   = w.s;
+  document.getElementById('fcSentZh').textContent = w.sz;
+  document.getElementById('fcStatus').textContent = `✅ 已懂：${fcKnown}　🔄 再練：${fcAgain.length}`;
+  const card = document.getElementById('fcCard');
+  card.classList.remove('flipped');
+  document.getElementById('fcBtns').style.display = 'none';
+}
+
+function flipFC() {
+  const card = document.getElementById('fcCard');
+  card.classList.toggle('flipped');
+  if (card.classList.contains('flipped'))
+    document.getElementById('fcBtns').style.display = 'flex';
+}
+
+function fcAns(known) {
+  if (known) { fcKnown++; showFB('✅'); }
+  else { fcAgain.push(currentWords[fcIdx]); showFB('🔄'); }
+  fcIdx++;
+  setTimeout(renderFC, 300);
+}
+
+function endFlashcard() {
+  const total = currentWords.length;
+  const pct = Math.round((fcKnown / total) * 100);
+  const earned = fcKnown * 5;
+  totalPts += earned;
+  wordsDone = Math.max(wordsDone, total);
+  save();
+  const stars = pct >= 90 ? '⭐⭐⭐' : pct >= 70 ? '⭐⭐' : '⭐';
+  const emoji = pct >= 90 ? '🏆' : pct >= 70 ? '😊' : '💪';
+  const title = pct >= 90 ? '超厲害！全部搞定！' : pct >= 70 ? '不錯喔！' : '繼續加油！';
+  showResult(emoji, title, `已懂 ${fcKnown}/${total} 張　獲得 +${earned} 分`, stars);
+  if (pct >= 80) confetti();
+}
+
+// ══════════════════════════════════════════
+// ─── QUIZ MODE ───
+// ══════════════════════════════════════════
+function startQuiz() {
+  currentMode = 'quiz';
+  currentWords = shuffle([...getWords()]).slice(0, 20);
+  qzIdx = 0; qzScore = 0; qzLives = 3; qzStreak = 0; qzDone = false;
+  showScreen('quizScreen');
+  renderQZ();
+}
+
+function renderQZ() {
+  if (qzIdx >= currentWords.length || qzLives <= 0) { endQuiz(); return; }
+  qzDone = false;
+  const w = currentWords[qzIdx];
+  const total = currentWords.length;
+  document.getElementById('qzProg').textContent = `第 ${qzIdx+1} / ${total} 題`;
+  document.getElementById('qzBar').style.width  = `${(qzIdx/total)*100}%`;
+  document.getElementById('qzScore').textContent  = qzScore;
+  document.getElementById('qzStreak').textContent = qzStreak;
+  updateHearts();
+
+  // 3 question types: 0=EN→ZH, 1=ZH→EN, 2=sentence fill
+  const type = Math.floor(Math.random() * 3);
+  const opts  = buildOptions(w, type);
+  const lbl   = document.getElementById('qzLbl');
+  const word  = document.getElementById('qzWord');
+  const sent  = document.getElementById('qzSent');
+
+  if (type === 0) {
+    lbl.textContent  = '這個英文單字是什麼意思？';
+    word.textContent = w.w;
+    sent.textContent = '';
+  } else if (type === 1) {
+    lbl.textContent  = '哪個英文單字符合這個中文意思？';
+    word.textContent = w.zh;
+    sent.textContent = '';
+  } else {
+    // sentence fill: replace word with ___
+    const blanked = w.s.replace(new RegExp('\\b' + w.w + '\\b', 'i'), '______');
+    lbl.textContent  = '句子中空格應填入哪個單字？';
+    word.textContent = '';
+    sent.textContent = blanked + '\n' + w.sz;
+  }
+
+  const optsEl = document.getElementById('qzOpts');
+  optsEl.innerHTML = '';
+  opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = type === 0 ? opt.zh : opt.w;
+    btn.onclick = () => answerQZ(btn, opt.w === w.w, w, type);
+    optsEl.appendChild(btn);
+  });
+
+  startQZTimer();
+}
+
+function buildOptions(correct, type) {
+  const pool = getWords().filter(x => x.w !== correct.w);
+  return shuffle([correct, ...shuffle(pool).slice(0, 3)]);
+}
+
+function startQZTimer() {
+  clearInterval(qzTimer);
+  qzTimeLeft = 15;
+  document.getElementById('qzTimer').style.width = '100%';
+  qzTimer = setInterval(() => {
+    qzTimeLeft -= 0.1;
+    document.getElementById('qzTimer').style.width = Math.max(0, (qzTimeLeft/15)*100) + '%';
+    if (qzTimeLeft <= 0) { clearInterval(qzTimer); if (!qzDone) timeOutQZ(); }
+  }, 100);
+}
+
+function timeOutQZ() {
+  qzDone = true;
+  qzStreak = 0; qzLives--;
+  updateHearts();
+  showFB('⏰');
+  highlightCorrect(currentWords[qzIdx]);
+  setTimeout(() => { qzIdx++; renderQZ(); }, 1500);
+}
+
+function answerQZ(btn, correct, w, type) {
+  if (qzDone) return;
+  qzDone = true;
+  clearInterval(qzTimer);
+  document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+  if (correct) {
+    btn.classList.add('correct');
+    const bonus = Math.ceil(qzTimeLeft);
+    qzScore += 10 + bonus;
+    qzStreak++;
+    if (qzStreak > bestStr) { bestStr = qzStreak; localStorage.setItem('bestStr', bestStr); }
+    showFB(qzStreak >= 5 ? '🔥🔥' : qzStreak >= 3 ? '🔥' : '✅');
+    if (qzStreak >= 3) { showCombo(qzStreak); playChime(); }
+  } else {
+    btn.classList.add('wrong');
+    qzLives--; qzStreak = 0;
+    updateHearts();
+    showFB('❌');
+    highlightCorrect(w, type);
+  }
+  document.getElementById('qzScore').textContent  = qzScore;
+  document.getElementById('qzStreak').textContent = qzStreak;
+  setTimeout(() => { qzIdx++; renderQZ(); }, 1500);
+}
+
+function highlightCorrect(w, type) {
+  const isZH = document.getElementById('qzLbl').textContent.includes('英文');
+  document.querySelectorAll('.opt-btn').forEach(btn => {
+    const match = isZH ? btn.textContent === w.zh : btn.textContent === w.w;
+    if (match) btn.classList.add('correct');
+  });
+}
+
+function updateHearts() {
+  const h = '❤️'.repeat(qzLives) + '🖤'.repeat(3 - qzLives);
+  document.getElementById('qzLives').textContent = h;
+}
+
+function endQuiz() {
+  clearInterval(qzTimer);
+  const maxPts = currentWords.length * 25;
+  const pct = Math.round((qzScore / maxPts) * 100);
+  totalPts += qzScore;
+  save();
+  const stars = pct >= 80 ? '⭐⭐⭐' : pct >= 60 ? '⭐⭐' : '⭐';
+  const emoji = qzLives <= 0 ? '😢' : pct >= 80 ? '🏆' : pct >= 60 ? '😊' : '💪';
+  const title = qzLives <= 0 ? '生命耗盡！' : pct >= 80 ? '太強了！' : pct >= 60 ? '不錯喔！' : '繼續努力！';
+  showResult(emoji, title, `得分：${qzScore}　最高連線：${bestStr}\n獲得 +${qzScore} 積分`, stars);
+  if (pct >= 80) confetti();
+}
+
+// ══════════════════════════════════════════
+// ─── MATCH MODE ───
+// ══════════════════════════════════════════
+function startMatch() {
+  currentMode = 'match';
+  mtSel = null; mtMatched = 0; mtErr = 0; mtSec = 0;
+  clearInterval(mtInterval);
+  const words = shuffle([...getWords()]).slice(0, 6);
+  const cards = [];
+  words.forEach(w => {
+    cards.push({id: w.w, type:'en', text: w.w});
+    cards.push({id: w.w, type:'zh', text: w.zh});
+  });
+  mtCards = shuffle(cards);
+  showScreen('matchScreen');
+  renderMT();
+  document.getElementById('mtScore').textContent = '0';
+  document.getElementById('mtErr').textContent   = '0';
+  document.getElementById('mtTimer').textContent = '⏱ 00:00';
+  document.getElementById('mtStatus').textContent = '請先點選一張卡片…';
+  mtInterval = setInterval(() => {
+    mtSec++;
+    const m = String(Math.floor(mtSec/60)).padStart(2,'0');
+    const s = String(mtSec%60).padStart(2,'0');
+    document.getElementById('mtTimer').textContent = `⏱ ${m}:${s}`;
+  }, 1000);
+}
+
+function renderMT() {
+  const grid = document.getElementById('mtGrid');
+  grid.innerHTML = '';
+  mtCards.forEach((card, i) => {
+    const btn = document.createElement('button');
+    btn.className = `mt-card ${card.type === 'en' ? 'en-card' : 'zh-card'}`;
+    btn.dataset.i = i;
+    btn.textContent = card.text;
+    btn.onclick = () => pickMT(i, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function pickMT(i, btn) {
+  const card = mtCards[i];
+  if (btn.classList.contains('done') || btn.classList.contains('sel')) {
+    btn.classList.remove('sel'); mtSel = null;
+    document.getElementById('mtStatus').textContent = '請先點選一張卡片…';
+    return;
+  }
+  if (!mtSel) {
+    mtSel = {i, card, btn};
+    btn.classList.add('sel');
+    document.getElementById('mtStatus').textContent =
+      card.type === 'en' ? `已選英文「${card.text}」，請選對應中文` : `已選中文「${card.text}」，請選對應英文`;
+  } else {
+    const prev = mtSel;
+    prev.btn.classList.remove('sel');
+    mtSel = null;
+    if (prev.card.id === card.id && prev.card.type !== card.type) {
+      prev.btn.classList.add('done');
+      btn.classList.add('done');
+      mtMatched++;
+      document.getElementById('mtScore').textContent = mtMatched;
+      showFB('✅');
+      if (mtMatched === mtCards.length / 2) { clearInterval(mtInterval); setTimeout(endMatch, 600); }
+      else document.getElementById('mtStatus').textContent = `🎉 答對！還剩 ${mtCards.length/2 - mtMatched} 對`;
+    } else {
+      btn.classList.add('err'); prev.btn.classList.add('err');
+      mtErr++;
+      document.getElementById('mtErr').textContent = mtErr;
+      showFB('❌');
+      document.getElementById('mtStatus').textContent = '配對錯誤，再試試！';
+      setTimeout(() => { btn.classList.remove('err'); prev.btn.classList.remove('err'); }, 500);
+    }
+  }
+}
+
+function endMatch() {
+  const total = mtCards.length / 2;
+  const acc = Math.round((total / (total + mtErr)) * 100);
+  const timeBonus = Math.max(0, 180 - mtSec);
+  const earned = total * 15 + timeBonus;
+  totalPts += earned;
+  save();
+  const stars = acc >= 90 ? '⭐⭐⭐' : acc >= 70 ? '⭐⭐' : '⭐';
+  const emoji = acc >= 90 ? '🏆' : acc >= 70 ? '😊' : '💪';
+  const title = acc >= 90 ? '完美配對！' : acc >= 70 ? '配對成功！' : '繼續練習！';
+  const m = Math.floor(mtSec/60), s = mtSec % 60;
+  showResult(emoji, title, `時間：${m}分${s}秒　錯誤：${mtErr}次\n獲得 +${earned} 積分`, stars);
+  if (acc >= 80) confetti();
+}
+
+// ══════════════════════════════════════════
+// ─── SPELLING MODE ───
+// ══════════════════════════════════════════
+function startSpelling() {
+  currentMode = 'spelling';
+  currentWords = shuffle([...getWords()]).slice(0, 20);
+  spIdx = 0; spScore = 0; spErrCount = 0;
+  showScreen('spellingScreen');
+  document.getElementById('spTotal').textContent = currentWords.length;
+  renderSP();
+}
+
+function renderSP() {
+  if (spIdx >= currentWords.length) { endSpelling(); return; }
+  const w = currentWords[spIdx];
+  spInput = Array(w.w.length).fill('');
+  spWordLetters = shuffle(w.w.toLowerCase().split(''));
+
+  document.getElementById('spIdx').textContent   = spIdx + 1;
+  document.getElementById('spBar').style.width   = `${(spIdx/currentWords.length)*100}%`;
+  document.getElementById('spScore').textContent  = spScore;
+  document.getElementById('spErr').textContent    = spErrCount;
+  document.getElementById('spHint').textContent   = `${w.pos} ── 看中文，拼出英文單字（共 ${w.w.length} 個字母）`;
+  document.getElementById('spZh').textContent     = w.zh;
+  document.getElementById('spSent').textContent   = w.s.replace(new RegExp('\\b' + w.w + '\\b','i'), '______') + '\n' + w.sz;
+
+  // Blanks
+  const blanksEl = document.getElementById('spBlanks');
+  blanksEl.innerHTML = '';
+  w.w.split('').forEach((_, i) => {
+    const inp = document.createElement('div');
+    inp.className = 'sp-blank';
+    inp.id = `spb_${i}`;
+    inp.textContent = '';
+    blanksEl.appendChild(inp);
+  });
+
+  // Letters
+  const lettersEl = document.getElementById('spLetters');
+  lettersEl.innerHTML = '';
+  spWordLetters.forEach((ch, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'sp-letter';
+    btn.id = `spl_${i}`;
+    btn.textContent = ch.toUpperCase();
+    btn.onclick = () => spClick(i, ch, btn);
+    lettersEl.appendChild(btn);
+  });
+}
+
+function spClick(i, ch, btn) {
+  const nextBlank = spInput.findIndex(v => v === '');
+  if (nextBlank === -1) return;
+  spInput[nextBlank] = ch;
+  btn.disabled = true;
+  const blank = document.getElementById(`spb_${nextBlank}`);
+  blank.textContent = ch.toUpperCase();
+  blank.classList.add('filled');
+}
+
+function spClear() {
+  const w = currentWords[spIdx];
+  spInput = Array(w.w.length).fill('');
+  w.w.split('').forEach((_, i) => {
+    const blank = document.getElementById(`spb_${i}`);
+    blank.textContent = ''; blank.className = 'sp-blank';
+  });
+  spWordLetters.forEach((_, i) => {
+    const btn = document.getElementById(`spl_${i}`);
+    if (btn) btn.disabled = false;
+  });
+}
+
+function spCheck() {
+  const w = currentWords[spIdx];
+  const typed = spInput.join('').toLowerCase();
+  if (typed !== w.w.toLowerCase()) {
+    // show errors
+    w.w.toLowerCase().split('').forEach((ch, i) => {
+      const blank = document.getElementById(`spb_${i}`);
+      if (!blank) return;
+      if ((spInput[i] || '').toLowerCase() === ch) blank.classList.add('correct-letter');
+      else { blank.classList.add('wrong-letter'); blank.textContent = spInput[i] ? spInput[i].toUpperCase() : '?'; }
+    });
+    spErrCount++;
+    document.getElementById('spErr').textContent = spErrCount;
+    showFB('❌');
+    setTimeout(() => { spClear(); }, 900);
+    return;
+  }
+  // Correct!
+  w.w.split('').forEach((_, i) => {
+    document.getElementById(`spb_${i}`).classList.add('correct-letter');
+  });
+  spScore += 15;
+  document.getElementById('spScore').textContent = spScore;
+  showFB('✅');
+  playChime();
+  setTimeout(() => { spIdx++; renderSP(); }, 800);
+}
+
+function spSkip() {
+  showFB('⏭');
+  // show answer briefly
+  const w = currentWords[spIdx];
+  spClear();
+  w.w.split('').forEach((ch, i) => {
+    const blank = document.getElementById(`spb_${i}`);
+    blank.textContent = ch.toUpperCase();
+    blank.classList.add('wrong-letter');
+  });
+  spErrCount++;
+  document.getElementById('spErr').textContent = spErrCount;
+  setTimeout(() => { spIdx++; renderSP(); }, 1200);
+}
+
+function endSpelling() {
+  const total = currentWords.length;
+  const acc = Math.round((spScore / (total * 15)) * 100);
+  totalPts += spScore;
+  save();
+  const stars = acc >= 80 ? '⭐⭐⭐' : acc >= 60 ? '⭐⭐' : '⭐';
+  const emoji = acc >= 80 ? '🏆' : acc >= 60 ? '😊' : '💪';
+  const title = acc >= 80 ? '拼字達人！' : acc >= 60 ? '拼得不錯！' : '繼續練習！';
+  showResult(emoji, title, `得分：${spScore}　錯誤：${spErrCount}次\n獲得 +${spScore} 積分`, stars);
+  if (acc >= 80) confetti();
+}
+
+// ══════════════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════════════
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i+1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function save() {
+  localStorage.setItem('totalPts',  totalPts);
+  localStorage.setItem('bestStr',   bestStr);
+  localStorage.setItem('wordsDone', wordsDone);
+}
+
+function showFB(text) {
+  const el = document.createElement('div');
+  el.className = 'feedback';
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+function showCombo(n) {
+  const el = document.createElement('div');
+  el.className = 'combo-badge';
+  el.textContent = `🔥 ${n}連線！`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1800);
+}
+
+function playChime() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [523, 659, 784, 1047].forEach((f, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.25, ctx.currentTime + i*0.1);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.1 + 0.15);
+      o.start(ctx.currentTime + i*0.1);
+      o.stop(ctx.currentTime + i*0.1 + 0.2);
+    });
+  } catch(e) {}
+}
+
+function confetti() {
+  const colors = ['#f9d423','#ff4e50','#43e97b','#4facfe','#f093fb','#ffffff','#38f9d7'];
+  for (let i = 0; i < 80; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'confetti';
+      const sz = Math.random()*10+5;
+      p.style.cssText = `left:${Math.random()*100}%;width:${sz}px;height:${sz}px;background:${colors[~~(Math.random()*colors.length)]};border-radius:${Math.random()>.5?'50%':'3px'};animation-duration:${Math.random()*1.5+1}s;animation-delay:${Math.random()*0.8}s;opacity:1`;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 3000);
+    }, i * 25);
+  }
+}
+
+function showResult(emoji, title, score, stars) {
+  document.getElementById('rEmoji').textContent = emoji;
+  document.getElementById('rTitle').textContent = title;
+  document.getElementById('rScore').textContent = score;
+  document.getElementById('rStars').textContent = stars;
+  document.getElementById('overlay').classList.add('show');
+}
+
+function hideOverlay() {
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ══════════════════════════════════════════
+// ─── READING COMPREHENSION ───
+// ══════════════════════════════════════════
+const rdPassages = [
+  {
+    title: "A Busy Day at School",
+    text: "Tom is a student in Taiwan. He gets up at 6:30 every morning and takes the bus to school. He studies hard and always tries his best. After school, he joins the basketball club. His favorite subject is science because he loves learning about nature.",
+    qs: [
+      { q: "What time does Tom get up every morning?",
+        opts: ["6:00","6:30","7:00","7:30"], ans: 1,
+        exp: "✏️ 文章第二句說 \"He gets up at 6:30 every morning\"（他每天早上6:30起床）。" },
+      { q: "How does Tom get to school?",
+        opts: ["by car","by bike","by bus","on foot"], ans: 2,
+        exp: "✏️ 文章說 \"takes the bus to school\"（搭公車上學）。" },
+      { q: "Why does Tom like science?",
+        opts: ["his teacher is kind","it is easy","he loves learning about nature","his friends like it too"], ans: 2,
+        exp: "✏️ 文章說 \"he loves learning about nature\"（他喜歡了解大自然），這是他喜歡科學的原因。" }
+    ]
+  },
+  {
+    title: "The Night Market",
+    text: "Taiwan is famous for its night markets. People can find all kinds of food there. Some popular foods include stinky tofu, bubble tea, and scallion pancakes. Many tourists from around the world visit Taiwan just to enjoy the food. Night markets are open in the evening and close late at night.",
+    qs: [
+      { q: "What is Taiwan famous for according to the passage?",
+        opts: ["mountains","night markets","temples","beaches"], ans: 1,
+        exp: "✏️ 文章第一句直接說 \"Taiwan is famous for its night markets\"（台灣以夜市聞名）。" },
+      { q: "Which food is NOT mentioned in the passage?",
+        opts: ["stinky tofu","bubble tea","fried chicken","scallion pancakes"], ans: 2,
+        exp: "✏️ 文章提到臭豆腐(stinky tofu)、珍珠奶茶(bubble tea)、蔥油餅(scallion pancakes)，沒有提到炸雞(fried chicken)。" },
+      { q: "When are night markets open?",
+        opts: ["in the morning","all day long","in the afternoon","in the evening"], ans: 3,
+        exp: "✏️ 文章說 \"Night markets are open in the evening\"（夜市傍晚開始營業）。" }
+    ]
+  },
+  {
+    title: "Saving the Earth",
+    text: "Our planet is in danger. Every year, people throw away millions of tons of plastic. This plastic ends up in the ocean and harms sea animals. We can help by using less plastic, recycling, and planting trees. Small changes in our daily life can make a big difference.",
+    qs: [
+      { q: "What is the main problem mentioned in the passage?",
+        opts: ["air pollution","plastic pollution","noise pollution","water shortage"], ans: 1,
+        exp: "✏️ 文章主要討論塑膠廢棄物問題：\"people throw away millions of tons of plastic\"（人們每年丟掉數百萬噸塑膠）。" },
+      { q: "Where does the plastic end up?",
+        opts: ["in landfills","in mountains","in the ocean","underground"], ans: 2,
+        exp: "✏️ 文章說 \"This plastic ends up in the ocean\"（這些塑膠最終流入海洋），並傷害海洋動物。" },
+      { q: "Which is NOT a way to help the Earth mentioned in the passage?",
+        opts: ["using less plastic","recycling","driving less","planting trees"], ans: 2,
+        exp: "✏️ 文章提到三種方法：減少使用塑膠、回收再利用、植樹。「少開車(driving less)」並未在文中提及。" }
+    ]
+  },
+  {
+    title: "My Favorite Hobby",
+    text: "Lisa loves reading books. She reads for at least one hour every day. Her favorite books are about animals and science. She often goes to the library on weekends to find new books. Reading has helped her learn many new words and do better in school.",
+    qs: [
+      { q: "How long does Lisa read every day?",
+        opts: ["30 minutes","at least one hour","two hours","all day"], ans: 1,
+        exp: "✏️ 文章說 \"She reads for at least one hour every day\"（她每天至少閱讀一小時）。" },
+      { q: "What kind of books does Lisa like most?",
+        opts: ["adventure and mystery","animals and science","sports and travel","romance and history"], ans: 1,
+        exp: "✏️ 文章說 \"Her favorite books are about animals and science\"（她最愛動物和科學類書籍）。" },
+      { q: "How has reading helped Lisa?",
+        opts: ["made more friends","learned new words and did better in school","became more popular","learned to cook"], ans: 1,
+        exp: "✏️ 文章最後說 \"Reading has helped her learn many new words and do better in school\"（閱讀幫她學了更多單字，也讓她學業進步）。" }
+    ]
+  },
+  {
+    title: "A Letter to a Friend",
+    text: "Dear Amy, I am writing to tell you about my trip to Japan. I visited many temples and tasted delicious sushi. The people there were very kind and helpful. I also bought some souvenirs for my family. I wish you could have come with me. Your friend, Jenny.",
+    qs: [
+      { q: "Who wrote this letter?",
+        opts: ["Amy","a teacher","Jenny","a tour guide"], ans: 2,
+        exp: "✏️ 信末署名 \"Your friend, Jenny\"，可知寫信的人是Jenny。" },
+      { q: "Where did the writer go?",
+        opts: ["Korea","China","Thailand","Japan"], ans: 3,
+        exp: "✏️ 信中說 \"my trip to Japan\"（我去日本的旅行），所以是去日本。" },
+      { q: "What did the writer buy for her family?",
+        opts: ["food","clothes","souvenirs","books"], ans: 2,
+        exp: "✏️ 文章說 \"I also bought some souvenirs for my family\"（我也為家人買了一些紀念品/伴手禮）。" }
+    ]
+  },
+  {
+    title: "Technology and Us",
+    text: "Technology has changed the way we live. We use smartphones to talk with friends, watch videos, and even pay for things. However, too much screen time can be harmful. Doctors say children should not use screens for more than two hours a day. It is important to spend time outdoors and exercise regularly.",
+    qs: [
+      { q: "According to the passage, which activity is NOT done with smartphones?",
+        opts: ["talking with friends","watching videos","playing outdoor sports","paying for things"], ans: 2,
+        exp: "✏️ 文章提到用手機：與朋友交流、看影片、付款。「打戶外運動(playing outdoor sports)」並未在文中提及。" },
+      { q: "According to doctors, how long should children use screens per day?",
+        opts: ["no more than 1 hour","no more than 2 hours","no more than 3 hours","no limit"], ans: 1,
+        exp: "✏️ 文章說 \"children should not use screens for more than two hours a day\"（孩子每天使用螢幕不應超過兩小時）。" },
+      { q: "What does the passage suggest children should do?",
+        opts: ["study more","use more apps","spend time outdoors","watch educational videos"], ans: 2,
+        exp: "✏️ 文章建議 \"spend time outdoors and exercise regularly\"（在戶外活動並定期運動），故選 spend time outdoors。" }
+    ]
+  },
+  {
+    title: "An Unusual Pet",
+    text: "Kevin has a very unusual pet — a turtle named Slow. Slow has lived with Kevin's family for fifteen years. Turtles can live for a very long time — some live to be over 100 years old! Slow eats vegetables and likes to sit in the sun. Kevin takes care of Slow every day.",
+    qs: [
+      { q: "What kind of pet does Kevin have?",
+        opts: ["a dog","a rabbit","a fish","a turtle"], ans: 3,
+        exp: "✏️ 文章開頭說 \"a turtle named Slow\"（一隻名叫Slow的烏龜）。" },
+      { q: "How long has Slow lived with Kevin's family?",
+        opts: ["5 years","10 years","15 years","20 years"], ans: 2,
+        exp: "✏️ 文章說 \"has lived with Kevin's family for fifteen years\"（已和Kevin的家人住了15年）。" },
+      { q: "What does Slow eat?",
+        opts: ["meat","fish","vegetables","insects"], ans: 2,
+        exp: "✏️ 文章說 \"Slow eats vegetables\"（Slow吃蔬菜）。" }
+    ]
+  },
+  {
+    title: "School Life in Taiwan",
+    text: "In Taiwan, students go to school five days a week. Classes usually start at 7:30 in the morning and end at around 4:00 in the afternoon. Students study many subjects, including Chinese, English, math, and science. After school, many students attend after-school programs or cram schools to prepare for exams.",
+    qs: [
+      { q: "How many days a week do students in Taiwan go to school?",
+        opts: ["4 days","5 days","6 days","7 days"], ans: 1,
+        exp: "✏️ 文章說 \"students go to school five days a week\"（學生每週上課五天）。" },
+      { q: "What time do classes usually end?",
+        opts: ["3:00 PM","4:00 PM","5:00 PM","6:00 PM"], ans: 1,
+        exp: "✏️ 文章說 \"end at around 4:00 in the afternoon\"（下午大約4點放學）。" },
+      { q: "Why do many students go to cram schools?",
+        opts: ["to make new friends","to learn new hobbies","to prepare for exams","to do sports"], ans: 2,
+        exp: "✏️ 文章說 \"to prepare for exams\"（為了準備考試），這是去補習班的原因。" }
+    ]
+  }
+];
+
+// Flatten all reading Q+A into one list
+let rdFlat = [];
+let rdIdx = 0, rdScore = 0, rdLives = 3;
+let rdTimer = null, rdTimeLeft = 25, rdDone = false;
+
+function startReading() {
+  currentMode = 'reading';
+  rdFlat = [];
+  rdPassages.forEach(p => p.qs.forEach((q, qi) => rdFlat.push({...q, title: p.title, text: p.text, qNum: qi+1, qTotal: p.qs.length})));
+  rdFlat = shuffle(rdFlat);
+  rdIdx = 0; rdScore = 0; rdLives = 3; rdDone = false;
+  showScreen('readingScreen');
+  renderRD();
+}
+
+function renderRD() {
+  if (rdIdx >= rdFlat.length || rdLives <= 0) { endReading(); return; }
+  rdDone = false;
+  const item = rdFlat[rdIdx];
+  document.getElementById('rdScore').textContent = rdScore;
+  document.getElementById('rdProg').textContent  = `${rdIdx+1}/${rdFlat.length}`;
+  document.getElementById('rdLives').textContent = '❤️'.repeat(rdLives) + '🖤'.repeat(3-rdLives);
+  document.getElementById('rdTitle').textContent = item.title;
+  document.getElementById('rdText').textContent  = item.text;
+  document.getElementById('rdQNum').textContent  = `問題 ${item.qNum} / ${item.qTotal}`;
+  document.getElementById('rdQ').textContent     = item.q;
+  const optsEl = document.getElementById('rdOpts');
+  optsEl.innerHTML = '';
+  item.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt;
+    btn.onclick = () => answerRD(btn, i === item.ans, item, i);
+    optsEl.appendChild(btn);
+  });
+  startRDTimer();
+}
+
+function startRDTimer() {
+  clearInterval(rdTimer);
+  rdTimeLeft = 25;
+  document.getElementById('rdTimer').style.width = '100%';
+  rdTimer = setInterval(() => {
+    rdTimeLeft -= 0.1;
+    document.getElementById('rdTimer').style.width = Math.max(0, (rdTimeLeft/25)*100) + '%';
+    if (rdTimeLeft <= 0) { clearInterval(rdTimer); if (!rdDone) { rdDone = true; rdLives--; showFB('⏰'); document.getElementById('rdLives').textContent = '❤️'.repeat(rdLives)+'🖤'.repeat(3-rdLives); openExplain(false, rdFlat[rdIdx].opts[rdFlat[rdIdx].ans], rdFlat[rdIdx].exp, () => { rdIdx++; renderRD(); }); } }
+  }, 100);
+}
+
+function answerRD(btn, correct, item, chosen) {
+  if (rdDone) return;
+  rdDone = true; clearInterval(rdTimer);
+  document.querySelectorAll('#rdOpts .opt-btn').forEach(b => b.disabled = true);
+  if (correct) {
+    btn.classList.add('correct');
+    rdScore += 10 + Math.ceil(rdTimeLeft);
+    showFB('✅'); playChime();
+  } else {
+    btn.classList.add('wrong'); rdLives--;
+    document.querySelectorAll('#rdOpts .opt-btn').forEach((b,i) => { if (i === item.ans) b.classList.add('correct'); });
+    showFB('❌');
+  }
+  document.getElementById('rdScore').textContent = rdScore;
+  openExplain(correct, item.opts[item.ans], item.exp, () => { rdIdx++; renderRD(); });
+}
+
+function endReading() {
+  clearInterval(rdTimer);
+  const maxPts = rdFlat.length * 35;
+  const pct = Math.round((rdScore / maxPts) * 100);
+  totalPts += rdScore; save();
+  const stars = pct >= 75 ? '⭐⭐⭐' : pct >= 50 ? '⭐⭐' : '⭐';
+  const emoji = rdLives <= 0 ? '😢' : pct >= 75 ? '🏆' : pct >= 50 ? '😊' : '💪';
+  const title = rdLives <= 0 ? '生命耗盡！' : pct >= 75 ? '閱讀達人！' : pct >= 50 ? '理解不錯！' : '再多練習！';
+  showResult(emoji, title, `答對：${Math.round(rdScore/35)}/${rdFlat.length} 題\n獲得 +${rdScore} 積分`, stars);
+  if (pct >= 75) confetti();
+}
+
+// ══════════════════════════════════════════
+// ─── CLOZE TEST ───
+// ══════════════════════════════════════════
+const czTexts = [
+  {
+    title: "A Healthy Lifestyle",
+    tpl: "To stay {0}, it is important to eat well and exercise every day. You should eat more vegetables and {1}, and drink less soda. Try to {2} for at least 30 minutes a day. Getting enough {3} at night is also very important. A healthy lifestyle can help you feel {4} and do better in school.",
+    blanks: [
+      { opts:["healthy","famous","nervous","popular"],  ans:0, exp:"stay healthy = 保持健康，healthy（健康的）最符合語意。" },
+      { opts:["fruit","cake","candy","chips"],          ans:0, exp:"搭配蔬菜(vegetables)，應選 fruit（水果），健康飲食要多吃蔬菜水果。" },
+      { opts:["exercise","sleep","cook","shop"],        ans:0, exp:"每天至少做30分鐘的 exercise（運動），呼應前句「要運動」。" },
+      { opts:["sleep","money","medicine","homework"],   ans:0, exp:"Getting enough sleep at night（晚上睡眠充足）是健康生活的一部分。" },
+      { opts:["better","worse","angrier","lonelier"],   ans:0, exp:"健康的生活方式讓你感覺 better（更好），符合整段正向語意。" }
+    ]
+  },
+  {
+    title: "The Internet",
+    tpl: "The Internet has become a very important {0} in our daily lives. We use it to {1} information, talk with friends, and watch videos. However, we must be {2} when using the Internet. Not all information online is true. We should not share personal information with {3}. The Internet is a useful {4}, but we must use it wisely.",
+    blanks: [
+      { opts:["tool","food","game","dream"],            ans:0, exp:"tool（工具）最符合語意；The Internet is an important tool（網際網路是重要工具）。" },
+      { opts:["find","eat","build","sell"],             ans:0, exp:"use the Internet to find information（用網路尋找資訊），find 是正確動詞。" },
+      { opts:["careful","tired","bored","excited"],     ans:0, exp:"be careful（要小心謹慎）最符合「使用網路要注意安全」的語意。" },
+      { opts:["strangers","teachers","parents","friends"], ans:0, exp:"不應與 strangers（陌生人）分享個人資訊，這是網路安全的基本原則。" },
+      { opts:["tool","place","story","dream"],          ans:0, exp:"The Internet is a useful tool（網路是有用的工具），前後呼應開頭。" }
+    ]
+  },
+  {
+    title: "Earth Day",
+    tpl: "Earth Day is {0} on April 22 every year. On this day, people around the world do things to help the {1}. Some people plant trees, while others {2} garbage from the streets. We can also save {3} by turning off lights when we leave a room. Everyone can do something small to {4} our planet.",
+    blanks: [
+      { opts:["celebrated","forgotten","invented","canceled"], ans:0, exp:"Earth Day is celebrated（地球日被慶祝）= 舉辦地球日活動，慶祝用 celebrated。" },
+      { opts:["environment","school","country","city"],        ans:0, exp:"幫助 environment（環境），全文都在討論環保，故選 environment。" },
+      { opts:["collect","destroy","sell","ignore"],            ans:0, exp:"從街道 collect（收集/清除）垃圾，collect garbage = 撿拾垃圾。" },
+      { opts:["energy","money","time","paper"],                ans:0, exp:"關燈可以 save energy（節省能源），這是常見的節能行動。" },
+      { opts:["protect","destroy","forget","pollute"],         ans:0, exp:"protect our planet（保護地球），全文主旨是環保，故選 protect。" }
+    ]
+  },
+  {
+    title: "Reading for Fun",
+    tpl: "Many people think reading is boring, but it can be very {0}. Books can take you to {1} places and teach you about different cultures. Reading also helps you improve your {2} and learn new words. You do not need to read for a long time. Even {3} 20 minutes a day can make a big {4}.",
+    blanks: [
+      { opts:["enjoyable","expensive","dangerous","difficult"],  ans:0, exp:"閱讀可以很 enjoyable（有趣的、令人愉快的），與前面「boring（無聊）」形成對比。" },
+      { opts:["different","same","old","broken"],               ans:0, exp:"書可以帶你去 different places（不同的地方），different 表示多樣性。" },
+      { opts:["language","cooking","singing","drawing"],        ans:0, exp:"閱讀能改善你的 language（語言能力），學習更多單字。" },
+      { opts:["reading","sleeping","shouting","running"],       ans:0, exp:"Even reading（即使是閱讀）20分鐘，強調閱讀這個動作本身的重要。" },
+      { opts:["difference","mistake","problem","noise"],        ans:0, exp:"make a big difference（有很大的影響），這是固定片語，表示「大有不同」。" }
+    ]
+  },
+  {
+    title: "My Summer Vacation",
+    tpl: "Last summer, I went on a trip with my {0}. We visited many {1} places in Japan. Every day, we tried new {2} and walked around the city. I was very {3} because I had never been to Japan before. At the end of the trip, I felt {4} but happy.",
+    blanks: [
+      { opts:["family","teacher","enemy","stranger"],            ans:0, exp:"和 family（家人）一起旅行，這是最自然的旅行伴侶選擇。" },
+      { opts:["famous","boring","dangerous","ugly"],             ans:0, exp:"參觀 famous places（著名景點），famous 表示知名的觀光地點。" },
+      { opts:["food","textbooks","tools","medicine"],            ans:0, exp:"每天嘗試新的 food（食物），旅行中品嚐當地美食很常見。" },
+      { opts:["excited","bored","angry","worried"],              ans:0, exp:"因為從未去過日本所以感到 excited（興奮的），第一次前往一個地方通常會很興奮。" },
+      { opts:["tired","hungry","sick","lost"],                   ans:0, exp:"旅途結束後感到 tired（疲憊的）但快樂，tired but happy 是旅行後的常見感受。" }
+    ]
+  }
+];
+
+let czTxtIdx = 0, czBlankIdx = 0, czScore = 0, czLives = 3;
+let czTimer = null, czTimeLeft = 15, czDone = false;
+let czOrder = [];
+
+function startCloze() {
+  currentMode = 'cloze';
+  czOrder = shuffle([...Array(czTexts.length).keys()]);
+  czTxtIdx = 0; czBlankIdx = 0; czScore = 0; czLives = 3; czDone = false;
+  showScreen('clozeScreen');
+  renderCZ();
+}
+
+function renderCZ() {
+  if (czLives <= 0 || czTxtIdx >= czOrder.length) { endCloze(); return; }
+  czDone = false;
+  const txt = czTexts[czOrder[czTxtIdx]];
+  const total = txt.blanks.length;
+  document.getElementById('czScore').textContent = czScore;
+  document.getElementById('czProg').textContent  = `${czTxtIdx+1}/${czOrder.length}`;
+  document.getElementById('czLives').textContent = '❤️'.repeat(czLives) + '🖤'.repeat(3-czLives);
+  document.getElementById('czQInfo').textContent = `📌 請選擇空格 (${czBlankIdx+1}/${total}) 的正確答案`;
+  renderCZPassage(txt);
+  const blank = txt.blanks[czBlankIdx];
+  const optsEl = document.getElementById('czOpts');
+  optsEl.innerHTML = '';
+  blank.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt;
+    btn.onclick = () => answerCZ(btn, i === blank.ans, blank, i, txt);
+    optsEl.appendChild(btn);
+  });
+  startCZTimer();
+}
+
+function renderCZPassage(txt) {
+  const el = document.getElementById('czPassage');
+  let html = `<strong style="font-size:0.9rem;color:#2d0080;display:block;margin-bottom:8px">${txt.title}</strong>`;
+  let body = txt.tpl;
+  txt.blanks.forEach((bl, i) => {
+    const filled  = bl._filled || '';
+    const cls     = i === czBlankIdx ? 'active' : (bl._result === 1 ? 'ok' : bl._result === -1 ? 'err' : '');
+    const display = filled ? filled : `(${i+1})`;
+    body = body.replace(`{${i}}`, `<span class="cz-blank ${cls}">${display}</span>`);
+  });
+  el.innerHTML = html + body;
+}
+
+function startCZTimer() {
+  clearInterval(czTimer);
+  czTimeLeft = 15;
+  document.getElementById('czTimer').style.width = '100%';
+  czTimer = setInterval(() => {
+    czTimeLeft -= 0.1;
+    document.getElementById('czTimer').style.width = Math.max(0,(czTimeLeft/15)*100)+'%';
+    if (czTimeLeft <= 0) {
+      clearInterval(czTimer);
+      if (!czDone) {
+        czDone = true; czLives--;
+        const txt = czTexts[czOrder[czTxtIdx]];
+        const bl  = txt.blanks[czBlankIdx];
+        bl._result = -1; bl._filled = bl.opts[bl.ans];
+        showFB('⏰');
+        document.getElementById('czLives').textContent = '❤️'.repeat(czLives)+'🖤'.repeat(3-czLives);
+        openExplain(false, bl.opts[bl.ans], bl.exp, advanceCZ);
+      }
+    }
+  }, 100);
+}
+
+function answerCZ(btn, correct, blank, chosen, txt) {
+  if (czDone) return;
+  czDone = true; clearInterval(czTimer);
+  document.querySelectorAll('#czOpts .opt-btn').forEach(b => b.disabled = true);
+  if (correct) {
+    btn.classList.add('correct');
+    blank._result = 1; blank._filled = blank.opts[blank.ans];
+    czScore += 10 + Math.ceil(czTimeLeft);
+    showFB('✅'); playChime();
+  } else {
+    btn.classList.add('wrong'); czLives--;
+    blank._result = -1; blank._filled = blank.opts[blank.ans];
+    document.querySelectorAll('#czOpts .opt-btn').forEach((b,i) => { if (i===blank.ans) b.classList.add('correct'); });
+    showFB('❌');
+  }
+  document.getElementById('czScore').textContent = czScore;
+  document.getElementById('czLives').textContent = '❤️'.repeat(czLives)+'🖤'.repeat(3-czLives);
+  openExplain(correct, blank.opts[blank.ans], blank.exp, advanceCZ);
+}
+
+function advanceCZ() {
+  const txt = czTexts[czOrder[czTxtIdx]];
+  czBlankIdx++;
+  if (czBlankIdx >= txt.blanks.length) {
+    txt.blanks.forEach(b => { delete b._result; delete b._filled; });
+    czTxtIdx++; czBlankIdx = 0;
+  }
+  if (czLives > 0) renderCZ();
+  else endCloze();
+}
+
+function endCloze() {
+  clearInterval(czTimer);
+  const total = czTexts.reduce((s, t) => s + t.blanks.length, 0);
+  const pct   = Math.round((czScore / (total * 25)) * 100);
+  totalPts += czScore; save();
+  const stars = pct >= 75 ? '⭐⭐⭐' : pct >= 50 ? '⭐⭐' : '⭐';
+  const emoji = czLives<=0 ? '😢' : pct>=75 ? '🏆' : pct>=50 ? '😊' : '💪';
+  const title = czLives<=0 ? '生命耗盡！' : pct>=75 ? '克漏字達人！' : pct>=50 ? '還不錯喔！' : '繼續加油！';
+  showResult(emoji, title, `得分：${czScore}　獲得 +${czScore} 積分`, stars);
+  if (pct >= 75) confetti();
+}
+
+// ══════════════════════════════════════════
+// ─── GRAMMAR TEST ───
+// ══════════════════════════════════════════
+const grQuestions = [
+  // 一般現在式
+  { topic:"一般現在式", q:'She _____ English every day.',
+    opts:["study","studies","studied","studying"], ans:1,
+    exp:"主詞 She 是第三人稱單數，一般現在式動詞要加 -s，故選 studies。" },
+  { topic:"一般現在式", q:'My parents _____ in Taipei.',
+    opts:["live","lives","lived","living"], ans:0,
+    exp:"主詞 My parents 是複數，一般現在式動詞不加 -s，故選 live。" },
+  { topic:"一般現在式", q:'He _____ breakfast every morning.',
+    opts:["make","makes","made","making"], ans:1,
+    exp:"He 是第三人稱單數，動詞加 -s，make → makes。" },
+  // 過去式
+  { topic:"過去式", q:'They _____ basketball yesterday.',
+    opts:["play","plays","played","playing"], ans:2,
+    exp:"yesterday（昨天）表示過去時間，動詞用過去式，play → played。" },
+  { topic:"過去式", q:'She _____ a letter to her friend last week.',
+    opts:["write","writes","wrote","writing"], ans:2,
+    exp:"last week（上週）表示過去，write 的過去式是 wrote（不規則動詞）。" },
+  { topic:"過去式", q:'I _____ very tired after the long walk.',
+    opts:["am","is","were","was"], ans:3,
+    exp:"主詞 I + 過去式，be 動詞用 was；were 用於 you/we/they。" },
+  // 現在進行式
+  { topic:"現在進行式", q:'Look! The children _____ in the park.',
+    opts:["play","plays","played","are playing"], ans:3,
+    exp:"Look! 暗示此時此刻，使用現在進行式 are playing（正在玩耍）。" },
+  { topic:"現在進行式", q:'She _____ a book right now.',
+    opts:["reads","read","is reading","has read"], ans:2,
+    exp:"right now（就在此刻）表示現在進行，用 is reading（正在閱讀）。" },
+  // 未來式
+  { topic:"未來式 will", q:'I _____ visit my grandparents next week.',
+    opts:["am","did","will","have"], ans:2,
+    exp:"next week（下週）是未來時間，用 will 表示將要做的事。" },
+  { topic:"未來式 will", q:'It _____ probably rain tomorrow.',
+    opts:["is","was","will","does"], ans:2,
+    exp:"tomorrow（明天）是未來，用 will 表示預測，will rain = 將會下雨。" },
+  // 代名詞
+  { topic:"所有格代名詞", q:'This is _____ book. （這本書是他的）',
+    opts:["he","him","his","himself"], ans:2,
+    exp:"空格後面有名詞 book，需要所有格代名詞，he 的所有格是 his（他的）。" },
+  { topic:"受格代名詞", q:'Tom gave _____ a gift for her birthday.',
+    opts:["she","her","hers","herself"], ans:1,
+    exp:"gave 後面的間接受詞需要受格，she 的受格是 her（給她）。" },
+  { topic:"反身代名詞", q:'She finished all the work by _____.',
+    opts:["she","her","hers","herself"], ans:3,
+    exp:"by oneself = 獨自、靠自己。she 的反身代名詞是 herself（她自己）。" },
+  // 介系詞（時間）
+  { topic:"介系詞 on/in/at", q:'My birthday is _____ July 15.',
+    opts:["at","in","on","by"], ans:2,
+    exp:"特定日期（幾月幾日）前用介系詞 on，如 on July 15（7月15日）。" },
+  { topic:"介系詞 on/in/at", q:'She was born _____ 2012.',
+    opts:["at","in","on","by"], ans:1,
+    exp:"年份前用介系詞 in，如 in 2012（2012年）。" },
+  { topic:"介系詞 on/in/at", q:'The store opens _____ 9 o\'clock.',
+    opts:["at","in","on","by"], ans:0,
+    exp:"鐘點時刻前用介系詞 at，如 at 9 o\'clock（9點鐘）。" },
+  // 比較級/最高級
+  { topic:"比較級", q:'Tom is _____ than his brother.',
+    opts:["tall","more tall","taller","tallest"], ans:2,
+    exp:"兩者比較用比較級，tall 是單音節形容詞，比較級直接加 -er → taller。" },
+  { topic:"最高級", q:'She is the _____ student in the class.',
+    opts:["smart","smarter","most smart","smartest"], ans:3,
+    exp:"最高級前加 the，smart 是單音節，最高級加 -est → smartest（最聰明的）。" },
+  { topic:"比較級（多音節）", q:'This movie is _____ interesting than that one.',
+    opts:["more","most","very","so"], ans:0,
+    exp:"多音節形容詞的比較級用 more + adj.，故選 more interesting（更有趣的）。" },
+  // 不定詞/動名詞
+  { topic:"動名詞 V-ing", q:'I enjoy _____ music in the evening.',
+    opts:["listen","listens","to listen","listening"], ans:3,
+    exp:"enjoy 後面要接動名詞（V-ing），故選 listening（聆聽）。" },
+  { topic:"不定詞 to V", q:'She wants _____ a famous singer.',
+    opts:["be","being","to be","is"], ans:2,
+    exp:"want 後面接不定詞（to + V），故選 to be（成為）。" },
+  { topic:"不定詞 to V", q:'It is important _____ enough sleep every night.',
+    opts:["get","gets","getting","to get"], ans:3,
+    exp:"It is + adj. + to V 是固定句型，故選 to get（獲得）。" },
+  // 連接詞
+  { topic:"連接詞 so/because", q:'He didn\'t do his homework, _____ he failed the test.',
+    opts:["because","but","so","although"], ans:2,
+    exp:"前句是原因，後句是結果，用 so（所以）連接：因為沒做作業，所以考試不及格。" },
+  { topic:"連接詞 although", q:'_____ it was raining, we still went hiking.',
+    opts:["Because","Although","So","If"], ans:1,
+    exp:"雖然下雨但仍去健行，表示「讓步」關係，用 Although（雖然）。" },
+  { topic:"連接詞 if", q:'_____ you study hard, you will pass the exam.',
+    opts:["Although","Because","But","If"], ans:3,
+    exp:"If 引導條件子句：「如果你努力讀書，你就會通過考試。」" },
+  // 被動語態
+  { topic:"被動語態", q:'The cake _____ made by my mother.',
+    opts:["is","are","were","am"], ans:0,
+    exp:"主詞 The cake 是單數，現在式被動語態用 is + p.p.，故選 is。" },
+  { topic:"被動語態（過去）", q:'The letter _____ sent to her yesterday.',
+    opts:["is","are","was","were"], ans:2,
+    exp:"yesterday 表示過去，過去式被動語態用 was + p.p.，主詞 The letter 是單數，故選 was。" },
+  // 關係代名詞
+  { topic:"關係代名詞 who", q:'The girl _____ is standing by the door is my sister.',
+    opts:["who","which","what","where"], ans:0,
+    exp:"先行詞是「人」（the girl），關係代名詞用 who（用來補充說明人的特徵）。" },
+  { topic:"關係代名詞 which", q:'The book _____ I borrowed from the library is very interesting.',
+    opts:["who","which","when","whose"], ans:1,
+    exp:"先行詞是「物」（the book），關係代名詞用 which（也可用 that）。" },
+  // 感嘆句
+  { topic:"感嘆句 What/How", q:'_____ a beautiful flower this is!',
+    opts:["How","What","Which","Very"], ans:1,
+    exp:"感嘆句：What + a/an + adj. + n. + subject + verb! 後面接名詞(flower)，故用 What。" },
+  { topic:"感嘆句 What/How", q:'_____ fast she runs!',
+    opts:["What","Which","How","So"], ans:2,
+    exp:"感嘆句：How + adj./adv. + subject + verb! 後面接副詞(fast)，故用 How。" },
+  // 現在完成式
+  { topic:"現在完成式 for/since", q:'She has lived here _____ 2019.',
+    opts:["for","since","at","from"], ans:1,
+    exp:"現在完成式搭配時間點用 since（自從）；since 2019 = 自2019年起。" },
+  { topic:"現在完成式 for/since", q:'He has been learning English _____ three years.',
+    opts:["since","for","at","in"], ans:1,
+    exp:"現在完成式搭配時間長度（一段時間）用 for；for three years = 持續了三年。" }
+];
+
+let grIdx = 0, grScore = 0, grLives = 3, grStreak = 0;
+let grTimer = null, grTimeLeft = 15, grDone = false;
+let grOrder = [];
+
+function startGrammar() {
+  currentMode = 'grammar';
+  grOrder = shuffle([...Array(grQuestions.length).keys()]).slice(0, 20);
+  grIdx = 0; grScore = 0; grLives = 3; grStreak = 0; grDone = false;
+  showScreen('grammarScreen');
+  renderGR();
+}
+
+function renderGR() {
+  if (grIdx >= grOrder.length || grLives <= 0) { endGrammar(); return; }
+  grDone = false;
+  const q = grQuestions[grOrder[grIdx]];
+  const total = grOrder.length;
+  document.getElementById('grScore').textContent  = grScore;
+  document.getElementById('grStreak').textContent = grStreak;
+  document.getElementById('grProg').textContent   = `第 ${grIdx+1} / ${total} 題`;
+  document.getElementById('grBar').style.width    = `${(grIdx/total)*100}%`;
+  document.getElementById('grLives').textContent  = '❤️'.repeat(grLives) + '🖤'.repeat(3-grLives);
+  document.getElementById('grTopic').textContent  = q.topic;
+  document.getElementById('grQ').innerHTML        = q.q.replace('_____', '<span class="gr-blank">_____</span>');
+  const optsEl = document.getElementById('grOpts');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt;
+    btn.onclick = () => answerGR(btn, i === q.ans, q, i);
+    optsEl.appendChild(btn);
+  });
+  startGRTimer();
+}
+
+function startGRTimer() {
+  clearInterval(grTimer);
+  grTimeLeft = 15;
+  document.getElementById('grTimer').style.width = '100%';
+  grTimer = setInterval(() => {
+    grTimeLeft -= 0.1;
+    document.getElementById('grTimer').style.width = Math.max(0,(grTimeLeft/15)*100)+'%';
+    if (grTimeLeft <= 0) {
+      clearInterval(grTimer);
+      if (!grDone) {
+        grDone = true; grStreak = 0; grLives--;
+        document.getElementById('grLives').textContent = '❤️'.repeat(grLives)+'🖤'.repeat(3-grLives);
+        showFB('⏰');
+        const q = grQuestions[grOrder[grIdx]];
+        document.querySelectorAll('#grOpts .opt-btn').forEach((b,i) => { if(i===q.ans) b.classList.add('correct'); });
+        openExplain(false, q.opts[q.ans], q.exp, () => { grIdx++; renderGR(); });
+      }
+    }
+  }, 100);
+}
+
+function answerGR(btn, correct, q, chosen) {
+  if (grDone) return;
+  grDone = true; clearInterval(grTimer);
+  document.querySelectorAll('#grOpts .opt-btn').forEach(b => b.disabled = true);
+  if (correct) {
+    btn.classList.add('correct');
+    grScore += 10 + Math.ceil(grTimeLeft);
+    grStreak++;
+    if (grStreak > bestStr) { bestStr = grStreak; localStorage.setItem('bestStr', bestStr); }
+    showFB(grStreak >= 5 ? '🔥🔥' : grStreak >= 3 ? '🔥' : '✅');
+    if (grStreak >= 3) { showCombo(grStreak); playChime(); }
+  } else {
+    btn.classList.add('wrong'); grLives--; grStreak = 0;
+    document.getElementById('grLives').textContent = '❤️'.repeat(grLives)+'🖤'.repeat(3-grLives);
+    document.querySelectorAll('#grOpts .opt-btn').forEach((b,i) => { if(i===q.ans) b.classList.add('correct'); });
+    showFB('❌');
+  }
+  document.getElementById('grScore').textContent  = grScore;
+  document.getElementById('grStreak').textContent = grStreak;
+  openExplain(correct, q.opts[q.ans], q.exp, () => { grIdx++; renderGR(); });
+}
+
+function endGrammar() {
+  clearInterval(grTimer);
+  const maxPts = grOrder.length * 25;
+  const pct    = Math.round((grScore / maxPts) * 100);
+  totalPts += grScore; save();
+  const stars = pct >= 80 ? '⭐⭐⭐' : pct >= 60 ? '⭐⭐' : '⭐';
+  const emoji = grLives<=0 ? '😢' : pct>=80 ? '🏆' : pct>=60 ? '😊' : '💪';
+  const title = grLives<=0 ? '生命耗盡！' : pct>=80 ? '文法滿分！' : pct>=60 ? '文法不錯！' : '繼續練習！';
+  showResult(emoji, title, `得分：${grScore}　最高連線：${bestStr}\n獲得 +${grScore} 積分`, stars);
+  if (pct >= 80) confetti();
+}
+
+// ══════════════════════════════════════════
+// EXPLANATION PANEL
+// ══════════════════════════════════════════
+let explainNext = null;
+
+function openExplain(correct, answer, explain, callback) {
+  explainNext = callback;
+  document.getElementById('expVerdict').textContent  = correct ? '✅ 答對了！' : '❌ 答錯了！';
+  document.getElementById('expVerdict').className    = 'exp-verdict ' + (correct ? 'ok' : 'err');
+  document.getElementById('expAnswer').textContent   = `正確答案：${answer}`;
+  document.getElementById('expExplain').textContent  = explain;
+  document.getElementById('explainPanel').classList.add('show');
+  document.getElementById('expDim').classList.add('show');
+}
+
+function closeExplain() {
+  document.getElementById('explainPanel').classList.remove('show');
+  document.getElementById('expDim').classList.remove('show');
+  if (explainNext) { const fn = explainNext; explainNext = null; setTimeout(fn, 100); }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  const screen = document.querySelector('.screen.active')?.id;
+  if (screen === 'flashcardScreen') {
+    if (e.code === 'Space') { e.preventDefault(); flipFC(); }
+    if (e.code === 'ArrowRight') fcAns(true);
+    if (e.code === 'ArrowLeft')  fcAns(false);
+  }
+  if (screen === 'spellingScreen') {
+    if (e.code === 'Enter')     spCheck();
+    if (e.code === 'Backspace') spClear();
+  }
+});
+</script>
+</body>
+</html>
